@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
+import 'package:markdown/markdown.dart' as md;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,10 +18,7 @@ class PlainTextApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'PlainText',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        useMaterial3: true,
-      ),
+      theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
       home: const HomeScreen(),
     );
   }
@@ -35,7 +33,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _controller = TextEditingController();
-  final String patreonUrl = 'https://patreon.com/Aital';
+  final String patreonUrl =
+      'https://patreon.com/your_page'; // Replace with your Patreon
 
   List<ConversionHistory> _history = [];
 
@@ -81,35 +80,137 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _convertMarkdownToPlainText(String markdown) {
-    String text = markdown;
+    final document = md.Document(
+      encodeHtml: false,
+      blockSyntaxes: md.ExtensionSet.gitHubFlavored.blockSyntaxes,
+      inlineSyntaxes: md.ExtensionSet.gitHubFlavored.inlineSyntaxes,
+    );
 
-    // Убираем code blocks
-    text = text.replaceAll(RegExp(r'```[\s\S]*?```'), '');
-    text = text.replaceAll(RegExp(r'`[^`]+`'), '');
+    final nodes = document.parseLines(markdown.split('\n'));
 
-    // Убираем заголовки
-    text = text.replaceAll(RegExp(r'^#{1,6}\s+', multiLine: true), '');
+    final buffer = StringBuffer();
+    _renderNodes(nodes, buffer, indent: 0);
 
-    // Убираем bold и italic
-    text = text.replaceAll(RegExp(r'\*\*([^*]+)\*\*'), r'$1');
-    text = text.replaceAll(RegExp(r'\*([^*]+)\*'), r'$1');
-    text = text.replaceAll(RegExp(r'__([^_]+)__'), r'$1');
-    text = text.replaceAll(RegExp(r'_([^_]+)_'), r'$1');
+    var result = buffer.toString().trim();
 
-    // Убираем ссылки [text](url) -> text
-    text = text.replaceAll(RegExp(r'\[([^\]]+)\]\([^)]+\)'), r'$1');
+    result = result.replaceAll(RegExp(r'\n{3,}'), '\n\n');
 
-    // Убираем списки
-    text = text.replaceAll(RegExp(r'^\s*[-*+]\s+', multiLine: true), '');
-    text = text.replaceAll(RegExp(r'^\s*\d+\.\s+', multiLine: true), '');
+    return result;
+  }
 
-    // Убираем blockquotes
-    text = text.replaceAll(RegExp(r'^\s*>\s+', multiLine: true), '');
+  void _renderNodes(
+    List<md.Node> nodes,
+    StringBuffer buffer, {
+    required int indent,
+  }) {
+    for (final node in nodes) {
+      if (node is md.Text) {
+        buffer.write(node.text);
+      } else if (node is md.Element) {
+        _renderElement(node, buffer, indent);
+      }
+    }
+  }
 
-    // Убираем лишние пустые строки
-    text = text.replaceAll(RegExp(r'\n{3,}'), '\n\n');
+  void _renderElement(md.Element element, StringBuffer buffer, int indent) {
+    final indentStr = '  ' * indent;
 
-    return text.trim();
+    switch (element.tag) {
+      // -------- BLOCKS --------
+
+      case 'p':
+        buffer.write(indentStr);
+        _renderNodes(element.children ?? [], buffer, indent: indent);
+        buffer.write('\n\n');
+        break;
+
+      case 'br':
+        buffer.write('\n');
+        break;
+
+      case 'h1':
+      case 'h2':
+      case 'h3':
+      case 'h4':
+      case 'h5':
+      case 'h6':
+        buffer.write(indentStr);
+        _renderNodes(element.children ?? [], buffer, indent: indent);
+        buffer.write('\n\n');
+        break;
+
+      case 'blockquote':
+        buffer.write(indentStr);
+        _renderNodes(element.children ?? [], buffer, indent: indent + 1);
+        buffer.write('\n\n');
+        break;
+
+      // -------- LISTS --------
+
+      case 'ul':
+        for (final li in element.children ?? []) {
+          if (li is md.Element && li.tag == 'li') {
+            buffer.write(indentStr);
+            buffer.write('• ');
+            _renderNodes(li.children ?? [], buffer, indent: indent + 1);
+            buffer.write('\n');
+          }
+        }
+        buffer.write('\n');
+        break;
+
+      case 'ol':
+        int index = 1;
+        for (final li in element.children ?? []) {
+          if (li is md.Element && li.tag == 'li') {
+            buffer.write(indentStr);
+            buffer.write('$index. ');
+            _renderNodes(li.children ?? [], buffer, indent: indent + 1);
+            buffer.write('\n');
+            index++;
+          }
+        }
+        buffer.write('\n');
+        break;
+
+      case 'li':
+        _renderNodes(element.children ?? [], buffer, indent: indent);
+        break;
+
+      // -------- CODE --------
+
+      case 'pre':
+      case 'code':
+        buffer.write(indentStr);
+        _renderNodes(element.children ?? [], buffer, indent: indent);
+        buffer.write('\n\n');
+        break;
+
+      // -------- INLINE --------
+
+      case 'strong':
+      case 'em':
+      case 'del':
+      case 'span':
+        _renderNodes(element.children ?? [], buffer, indent: indent);
+        break;
+
+      case 'a':
+        _renderNodes(element.children ?? [], buffer, indent: indent);
+        break;
+
+      case 'img':
+        final alt = element.attributes['alt'];
+        if (alt != null) buffer.write(alt);
+        break;
+
+      case 'hr':
+        buffer.write('\n');
+        break;
+
+      default:
+        _renderNodes(element.children ?? [], buffer, indent: indent);
+    }
   }
 
   void _copyPlainText() {
@@ -119,7 +220,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Текст скопирован!'),
+        content: Text('Text copied!'),
         duration: Duration(seconds: 2),
       ),
     );
@@ -164,7 +265,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'История',
+                      'History',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -180,56 +281,59 @@ class _HomeScreenState extends State<HomeScreen> {
               Expanded(
                 child: _history.isEmpty
                     ? const Center(
-                  child: Text(
-                    'История пуста',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                )
+                        child: Text(
+                          'No history yet',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      )
                     : ListView.builder(
-                  controller: scrollController,
-                  itemCount: _history.length,
-                  itemBuilder: (context, index) {
-                    final item = _history[index];
-                    return Dismissible(
-                      key: Key(item.timestamp.toString()),
-                      direction: DismissDirection.endToStart,
-                      background: Container(
-                        color: Colors.red,
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 16),
-                        child: const Icon(Icons.delete, color: Colors.white),
-                      ),
-                      onDismissed: (_) {
-                        setState(() => _history.removeAt(index));
-                        _saveHistory();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Удалено из истории'),
-                            duration: Duration(seconds: 1),
-                          ),
-                        );
-                      },
-                      child: ListTile(
-                        title: Text(
-                          item.plainText,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: Text(
-                          _formatTimestamp(item.timestamp),
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () {
-                          setState(() {
-                            _controller.text = item.markdown;
-                          });
-                          Navigator.pop(context);
+                        controller: scrollController,
+                        itemCount: _history.length,
+                        itemBuilder: (context, index) {
+                          final item = _history[index];
+                          return Dismissible(
+                            key: Key(item.timestamp.toString()),
+                            direction: DismissDirection.endToStart,
+                            background: Container(
+                              color: Colors.red,
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(right: 16),
+                              child: const Icon(
+                                Icons.delete,
+                                color: Colors.white,
+                              ),
+                            ),
+                            onDismissed: (_) {
+                              setState(() => _history.removeAt(index));
+                              _saveHistory();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Removed from history'),
+                                  duration: Duration(seconds: 1),
+                                ),
+                              );
+                            },
+                            child: ListTile(
+                              title: Text(
+                                item.plainText,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              subtitle: Text(
+                                _formatTimestamp(item.timestamp),
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              trailing: const Icon(Icons.chevron_right),
+                              onTap: () {
+                                setState(() {
+                                  _controller.text = item.markdown;
+                                });
+                                Navigator.pop(context);
+                              },
+                            ),
+                          );
                         },
                       ),
-                    );
-                  },
-                ),
               ),
             ],
           );
@@ -242,35 +346,35 @@ class _HomeScreenState extends State<HomeScreen> {
     final now = DateTime.now();
     final diff = now.difference(timestamp);
 
-    if (diff.inMinutes < 1) return 'Только что';
-    if (diff.inHours < 1) return '${diff.inMinutes} мин назад';
-    if (diff.inDays < 1) return '${diff.inHours} ч назад';
-    return '${diff.inDays} дн назад';
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
+    if (diff.inDays < 1) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
   }
 
   void _showSupportDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Поддержать проект'),
+        title: const Text('Support PlainText'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'PlainText — это бесплатное приложение без рекламы.',
+              'PlainText is a free app with no ads.',
               style: TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 16),
             const Text(
-              'Если приложение вам полезно, вы можете поддержать разработку на Patreon.',
+              'If you find this app useful, you can support its development on Patreon.',
             ),
             const SizedBox(height: 16),
             const Row(
               children: [
                 Icon(Icons.favorite, color: Colors.red, size: 20),
                 SizedBox(width: 8),
-                Text('Спасибо за вашу поддержку!'),
+                Text('Thank you for your support!'),
               ],
             ),
           ],
@@ -278,7 +382,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Закрыть'),
+            child: const Text('Close'),
           ),
           ElevatedButton.icon(
             onPressed: () async {
@@ -291,7 +395,7 @@ class _HomeScreenState extends State<HomeScreen> {
               }
             },
             icon: const Icon(Icons.open_in_new),
-            label: const Text('Открыть Patreon'),
+            label: const Text('Open Patreon'),
           ),
         ],
       ),
@@ -302,7 +406,7 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('О приложении'),
+        title: const Text('About'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -313,21 +417,21 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 16),
             const Text(
-              'Приложение для преобразования Markdown-текста от чат-ботов в обычный текст для удобной отправки в мессенджеры.',
+              'Convert Markdown-formatted text from chatbots to plain text for easy sharing in messengers.',
             ),
             const SizedBox(height: 16),
             const Text(
-              '• Без рекламы\n'
-                  '• История конвертаций\n'
-                  '• Быстрое копирование\n'
-                  '• Поделиться текстом',
+              '• No ads\n'
+              '• Conversion history\n'
+              '• Quick copy\n'
+              '• Share text',
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Закрыть'),
+            child: const Text('Close'),
           ),
         ],
       ),
@@ -353,7 +457,7 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.history),
             onPressed: _showHistory,
-            tooltip: 'История',
+            tooltip: 'History',
           ),
           PopupMenuButton<String>(
             onSelected: (value) {
@@ -373,7 +477,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Icon(Icons.favorite, color: Colors.red),
                     SizedBox(width: 8),
-                    Text('Поддержать'),
+                    Text('Support'),
                   ],
                 ),
               ),
@@ -383,7 +487,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Icon(Icons.info_outline),
                     SizedBox(width: 8),
-                    Text('О приложении'),
+                    Text('About'),
                   ],
                 ),
               ),
@@ -396,7 +500,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: Row(
               children: [
-                // Левая панель - ввод markdown
+                // Left panel - markdown input
                 Expanded(
                   child: Column(
                     children: [
@@ -420,12 +524,12 @@ class _HomeScreenState extends State<HomeScreen> {
                               IconButton(
                                 icon: const Icon(Icons.clear, size: 20),
                                 onPressed: _clearText,
-                                tooltip: 'Очистить',
+                                tooltip: 'Clear',
                               ),
                             IconButton(
                               icon: const Icon(Icons.content_paste, size: 20),
                               onPressed: _pasteFromClipboard,
-                              tooltip: 'Вставить',
+                              tooltip: 'Paste',
                             ),
                           ],
                         ),
@@ -436,7 +540,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           maxLines: null,
                           expands: true,
                           decoration: const InputDecoration(
-                            hintText: 'Вставьте текст с markdown разметкой...',
+                            hintText: 'Paste markdown text here...',
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.all(16),
                           ),
@@ -450,7 +554,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 Container(width: 1, color: Colors.grey.shade300),
 
-                // Правая панель - preview
+                // Right panel - preview
                 Expanded(
                   child: Column(
                     children: [
@@ -463,7 +567,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: const Row(
                           children: [
                             Text(
-                              'Обычный текст',
+                              'Plain Text',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
@@ -477,7 +581,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           padding: const EdgeInsets.all(16),
                           child: SelectableText(
                             plainText.isEmpty
-                                ? 'Превью появится здесь...'
+                                ? 'Preview will appear here...'
                                 : plainText,
                             style: TextStyle(
                               fontSize: 15,
@@ -495,14 +599,14 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          // Кнопки действий
+          // Action buttons
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
+                  color: Colors.black.withOpacity(0.1),
                   blurRadius: 4,
                   offset: const Offset(0, -2),
                 ),
@@ -514,7 +618,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: ElevatedButton.icon(
                     onPressed: _controller.text.isEmpty ? null : _copyPlainText,
                     icon: const Icon(Icons.copy),
-                    label: const Text('Копировать'),
+                    label: const Text('Copy'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
@@ -525,7 +629,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: OutlinedButton.icon(
                     onPressed: _controller.text.isEmpty ? null : _shareText,
                     icon: const Icon(Icons.share),
-                    label: const Text('Поделиться'),
+                    label: const Text('Share'),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
