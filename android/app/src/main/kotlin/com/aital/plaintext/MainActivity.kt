@@ -1,4 +1,4 @@
-package com.example.plaintext
+package com.aital.plaintext
 
 import io.flutter.embedding.android.FlutterActivity
 

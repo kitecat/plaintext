@@ -11,21 +11,77 @@ void main() async {
   runApp(const PlainTextApp());
 }
 
-class PlainTextApp extends StatelessWidget {
+class PlainTextApp extends StatefulWidget {
   const PlainTextApp({Key? key}) : super(key: key);
+
+  @override
+  State<PlainTextApp> createState() => _PlainTextAppState();
+}
+
+class _PlainTextAppState extends State<PlainTextApp> {
+  ThemeMode _themeMode = ThemeMode.system;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadThemeMode();
+  }
+
+  Future<void> _loadThemeMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final themeModeString = prefs.getString('theme_mode') ?? 'system';
+    setState(() {
+      _themeMode = ThemeMode.values.firstWhere(
+        (mode) => mode.toString() == 'ThemeMode.$themeModeString',
+        orElse: () => ThemeMode.system,
+      );
+    });
+  }
+
+  Future<void> _saveThemeMode(ThemeMode mode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('theme_mode', mode.toString().split('.').last);
+  }
+
+  void _updateThemeMode(ThemeMode mode) {
+    setState(() {
+      _themeMode = mode;
+    });
+    _saveThemeMode(mode);
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'PlainText',
-      theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
-      home: const HomeScreen(),
+      themeMode: _themeMode,
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        useMaterial3: true,
+        brightness: Brightness.light,
+      ),
+      darkTheme: ThemeData(
+        primarySwatch: Colors.blue,
+        useMaterial3: true,
+        brightness: Brightness.dark,
+      ),
+      home: HomeScreen(
+        themeMode: _themeMode,
+        onThemeModeChanged: _updateThemeMode,
+      ),
     );
   }
 }
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  final ThemeMode themeMode;
+  final Function(ThemeMode) onThemeModeChanged;
+
+  const HomeScreen({
+    Key? key,
+    required this.themeMode,
+    required this.onThemeModeChanged,
+  }) : super(key: key);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -33,8 +89,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _controller = TextEditingController();
-  final String patreonUrl =
-      'https://patreon.com/your_page'; // Replace with your Patreon
+  final String patreonUrl = 'https://patreon.com/your_page';
 
   List<ConversionHistory> _history = [];
 
@@ -116,8 +171,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final indentStr = '  ' * indent;
 
     switch (element.tag) {
-      // -------- BLOCKS --------
-
       case 'p':
         buffer.write(indentStr);
         _renderNodes(element.children ?? [], buffer, indent: indent);
@@ -144,8 +197,6 @@ class _HomeScreenState extends State<HomeScreen> {
         _renderNodes(element.children ?? [], buffer, indent: indent + 1);
         buffer.write('\n\n');
         break;
-
-      // -------- LISTS --------
 
       case 'ul':
         for (final li in element.children ?? []) {
@@ -177,16 +228,12 @@ class _HomeScreenState extends State<HomeScreen> {
         _renderNodes(element.children ?? [], buffer, indent: indent);
         break;
 
-      // -------- CODE --------
-
       case 'pre':
       case 'code':
         buffer.write(indentStr);
         _renderNodes(element.children ?? [], buffer, indent: indent);
         buffer.write('\n\n');
         break;
-
-      // -------- INLINE --------
 
       case 'strong':
       case 'em':
@@ -352,6 +399,53 @@ class _HomeScreenState extends State<HomeScreen> {
     return '${diff.inDays}d ago';
   }
 
+  void _showThemeDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Theme'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            RadioListTile<ThemeMode>(
+              title: const Text('Light'),
+              value: ThemeMode.light,
+              groupValue: widget.themeMode,
+              onChanged: (value) {
+                if (value != null) {
+                  widget.onThemeModeChanged(value);
+                  Navigator.pop(context);
+                }
+              },
+            ),
+            RadioListTile<ThemeMode>(
+              title: const Text('Dark'),
+              value: ThemeMode.dark,
+              groupValue: widget.themeMode,
+              onChanged: (value) {
+                if (value != null) {
+                  widget.onThemeModeChanged(value);
+                  Navigator.pop(context);
+                }
+              },
+            ),
+            RadioListTile<ThemeMode>(
+              title: const Text('System'),
+              value: ThemeMode.system,
+              groupValue: widget.themeMode,
+              onChanged: (value) {
+                if (value != null) {
+                  widget.onThemeModeChanged(value);
+                  Navigator.pop(context);
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showSupportDialog() {
     showDialog(
       context: context,
@@ -450,6 +544,8 @@ class _HomeScreenState extends State<HomeScreen> {
         ? ''
         : _convertMarkdownToPlainText(_controller.text);
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('PlainText'),
@@ -462,6 +558,9 @@ class _HomeScreenState extends State<HomeScreen> {
           PopupMenuButton<String>(
             onSelected: (value) {
               switch (value) {
+                case 'theme':
+                  _showThemeDialog();
+                  break;
                 case 'support':
                   _showSupportDialog();
                   break;
@@ -471,6 +570,16 @@ class _HomeScreenState extends State<HomeScreen> {
               }
             },
             itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'theme',
+                child: Row(
+                  children: [
+                    Icon(Icons.palette_outlined),
+                    SizedBox(width: 8),
+                    Text('Theme'),
+                  ],
+                ),
+              ),
               const PopupMenuItem(
                 value: 'support',
                 child: Row(
@@ -509,7 +618,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           horizontal: 16,
                           vertical: 12,
                         ),
-                        color: Colors.blue.shade50,
+                        color: isDark
+                            ? Colors.blue.shade900.withOpacity(0.3)
+                            : Colors.blue.shade50,
                         child: Row(
                           children: [
                             const Text(
@@ -552,7 +663,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-                Container(width: 1, color: Colors.grey.shade300),
+                Container(
+                  width: 1,
+                  color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                ),
 
                 // Right panel - preview
                 Expanded(
@@ -563,7 +677,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           horizontal: 16,
                           vertical: 12,
                         ),
-                        color: Colors.green.shade50,
+                        color: isDark
+                            ? Colors.green.shade900.withOpacity(0.3)
+                            : Colors.green.shade50,
                         child: const Row(
                           children: [
                             Text(
@@ -585,9 +701,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 : plainText,
                             style: TextStyle(
                               fontSize: 15,
-                              color: plainText.isEmpty
-                                  ? Colors.grey
-                                  : Colors.black,
+                              color: plainText.isEmpty ? Colors.grey : null,
                             ),
                           ),
                         ),
@@ -603,7 +717,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).scaffoldBackgroundColor,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.1),
