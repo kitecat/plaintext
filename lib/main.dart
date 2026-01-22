@@ -54,6 +54,7 @@ class _PlainTextAppState extends State<PlainTextApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'PlainText',
+      debugShowCheckedModeBanner: false,
       themeMode: _themeMode,
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -89,7 +90,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _controller = TextEditingController();
-  final String patreonUrl = 'https://patreon.com/your_page';
+  final String patreonUrl = 'https://patreon.com/aital';
 
   List<ConversionHistory> _history = [];
 
@@ -604,155 +605,165 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Row(
-              children: [
-                // Left panel - markdown input
-                Expanded(
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        color: isDark
-                            ? Colors.blue.shade900.withOpacity(0.3)
-                            : Colors.blue.shade50,
-                        child: Row(
-                          children: [
-                            const Text(
-                              'Markdown',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            Expanded(
+              child: Row(
+                children: [
+                  // Left panel - markdown input
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          color: isDark
+                              ? Colors.blue.shade900.withOpacity(0.3)
+                              : Colors.blue.shade50,
+                          child: Row(
+                            children: [
+                              const Text(
+                                'Markdown',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
                               ),
-                            ),
-                            const Spacer(),
-                            if (_controller.text.isNotEmpty)
+                              const Spacer(),
+                              if (_controller.text.isNotEmpty)
+                                IconButton(
+                                  icon: const Icon(Icons.clear, size: 20),
+                                  onPressed: _clearText,
+                                  tooltip: 'Clear',
+                                ),
                               IconButton(
-                                icon: const Icon(Icons.clear, size: 20),
-                                onPressed: _clearText,
-                                tooltip: 'Clear',
+                                icon: const Icon(Icons.content_paste, size: 20),
+                                onPressed: _pasteFromClipboard,
+                                tooltip: 'Paste',
                               ),
-                            IconButton(
-                              icon: const Icon(Icons.content_paste, size: 20),
-                              onPressed: _pasteFromClipboard,
-                              tooltip: 'Paste',
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: TextField(
-                          controller: _controller,
-                          maxLines: null,
-                          expands: true,
-                          decoration: const InputDecoration(
-                            hintText: 'Paste markdown text here...',
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.all(16),
+                            ],
                           ),
-                          style: const TextStyle(fontSize: 15),
-                          onChanged: (_) => setState(() {}),
                         ),
-                      ),
-                    ],
+                        Expanded(
+                          child: TextField(
+                            controller: _controller,
+                            maxLines: null,
+                            expands: true,
+                            decoration: const InputDecoration(
+                              hintText: 'Paste markdown text here...',
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.all(16),
+                            ),
+                            style: const TextStyle(fontSize: 15),
+                            onChanged: (_) => setState(() {}),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
 
-                Container(
-                  width: 1,
-                  color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
-                ),
+                  Container(
+                    width: 1,
+                    color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                  ),
 
-                // Right panel - preview
-                Expanded(
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
+                  // Right panel - preview
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          color: isDark
+                              ? Colors.green.shade900.withOpacity(0.3)
+                              : Colors.green.shade50,
+                          child: const Row(
+                            children: [
+                              Text(
+                                'Plain Text',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        color: isDark
-                            ? Colors.green.shade900.withOpacity(0.3)
-                            : Colors.green.shade50,
-                        child: const Row(
-                          children: [
-                            Text(
-                              'Plain Text',
+                        Expanded(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(16),
+                            child: SelectableText(
+                              plainText.isEmpty
+                                  ? 'Preview will appear here...'
+                                  : plainText,
                               style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                fontSize: 15,
+                                color: plainText.isEmpty ? Colors.grey : null,
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.all(16),
-                          child: SelectableText(
-                            plainText.isEmpty
-                                ? 'Preview will appear here...'
-                                : plainText,
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: plainText.isEmpty ? Colors.grey : null,
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
 
-          // Action buttons
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _controller.text.isEmpty ? null : _copyPlainText,
-                    icon: const Icon(Icons.copy),
-                    label: const Text('Copy'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+            // Action buttons
+            Container(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                16,
+                16,
+                16 + MediaQuery.of(context).padding.bottom,
+              ),
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _controller.text.isEmpty
+                          ? null
+                          : _copyPlainText,
+                      icon: const Icon(Icons.copy),
+                      label: const Text('Copy'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _controller.text.isEmpty ? null : _shareText,
-                    icon: const Icon(Icons.share),
-                    label: const Text('Share'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _controller.text.isEmpty ? null : _shareText,
+                      icon: const Icon(Icons.share),
+                      label: const Text('Share'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
