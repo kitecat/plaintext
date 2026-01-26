@@ -10,7 +10,7 @@
 [![Flutter](https://img.shields.io/badge/Flutter-3.0+-02569B?style=for-the-badge&logo=flutter)](https://flutter.dev)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-[Download on Google Play](https://play.google.com/apps/testing/com.aital.plaintext) • [Report Bug](issues) • [Request Feature](issues)
+[Download on Google Play](https://play.google.com/apps/testing/com.aital.plaintext) • [Report Bug](https://github.com/kitecat/plaintext/issues) • [Request Feature](https://github.com/kitecat/plaintext/issues)
 
 </div>
 
@@ -106,7 +106,7 @@ Bold text, italic, Headers, • Lists, code, links
 
 - None currently reported
 
-Found a bug? [Report it here](issues)
+Found a bug? [Report it here](https://github.com/kitecat/plaintext/issues)
 
 ---
 
