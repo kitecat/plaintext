@@ -149,7 +149,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     var result = buffer.toString().trim();
 
+    // Replace multiple newlines with double newline
     result = result.replaceAll(RegExp(r'\n{3,}'), '\n\n');
+
+    // Replace em dash with regular dash
+    result = result.replaceAll('—', '-');
+
+    // Replace en dash with regular dash
+    result = result.replaceAll('–', '-');
 
     return result;
   }
