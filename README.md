@@ -131,7 +131,7 @@ If you find PlainText useful, consider supporting its development:
 
 - ⭐ Star this repository
 - 📝 Rate the app on [Google Play](https://play.google.com/apps/testing/com.aital.plaintext)
-- ☕ [Support on Patreon](https://patreon.com/your_page)
+- ☕ [Support on Patreon](https://patreon.com/aital)
 - 🐛 Report bugs and suggest features
 
 ---
