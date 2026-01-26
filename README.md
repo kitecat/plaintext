@@ -78,7 +78,7 @@ Bold text, italic, Headers, • Lists, code, links
 
 - **Framework:** [Flutter](https://flutter.dev) 3.0+
 - **Language:** Dart
-- **Platforms:** Android 5.0+ (iOS support planned)
+- **Platforms:** Android 7.0+ (iOS support planned)
 - **Key Dependencies:**
   - `markdown` - Markdown parsing
   - `shared_preferences` - Local storage
