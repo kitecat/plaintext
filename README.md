@@ -8,7 +8,7 @@
 
 [![Google Play](https://img.shields.io/badge/Google%20Play-Testing-blue?style=for-the-badge&logo=google-play)](https://play.google.com/apps/testing/com.aital.plaintext)
 [![Flutter](https://img.shields.io/badge/Flutter-3.0+-02569B?style=for-the-badge&logo=flutter)](https://flutter.dev)
-[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache%202.0-green?style=for-the-badge)](LICENSE)
 
 [Download on Google Play](https://play.google.com/apps/testing/com.aital.plaintext) • [Report Bug](https://github.com/kitecat/plaintext/issues) • [Request Feature](https://github.com/kitecat/plaintext/issues)
 
