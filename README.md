@@ -87,14 +87,6 @@ Bold text, italic, Headers, • Lists, code, links
 
 ---
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Flutter SDK 3.0 or higher
-- Android Studio / VS Code
-- Android device or emulator (Android 5.0+)
-
 ## 📦 Supported Markdown Elements
 
 - ✅ Headers (H1-H6)
@@ -128,7 +120,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Aital**
 
-- GitHub: [@yourusername](https://github.com/kitecat)
+- GitHub: [@kitecat](https://github.com/kitecat)
 - Google Play: [PlainText App](https://play.google.com/apps/testing/com.aital.plaintext)
 
 ---
