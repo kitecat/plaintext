@@ -112,7 +112,7 @@ Found a bug? [Report it here](https://github.com/kitecat/plaintext/issues)
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
