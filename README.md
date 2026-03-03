@@ -121,7 +121,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Aital**
 
 - GitHub: [@kitecat](https://github.com/kitecat)
-- Google Play: [PlainText App](https://play.google.com/apps/testing/com.aital.plaintext)
+- Google Play: [PlainText App](https://play.google.com/store/apps/details?id=com.aital.plaintext)
 
 ---
 
@@ -130,7 +130,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 If you find PlainText useful, consider supporting its development:
 
 - ⭐ Star this repository
-- 📝 Rate the app on [Google Play](https://play.google.com/apps/testing/com.aital.plaintext)
+- 📝 Rate the app on [Google Play](https://play.google.com/store/apps/details?id=com.aital.plaintext)
 - ☕ [Support on Patreon](https://patreon.com/aital)
 - 🐛 Report bugs and suggest features
 
@@ -147,6 +147,6 @@ If you find PlainText useful, consider supporting its development:
 
 <div align="center">
 
-[Download Now](https://play.google.com/apps/testing/com.aital.plaintext) • [Report Issue](issues) • [Request Feature](issues)
+[Download Now](https://play.google.com/store/apps/details?id=com.aital.plaintext) • [Report Issue](issues) • [Request Feature](issues)
 
 </div>
