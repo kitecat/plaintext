@@ -6,7 +6,7 @@
 
 **Convert markdown-formatted text from AI chatbots into clean, readable plain text**
 
-[![Google Play](https://img.shields.io/badge/Google%20Play-Testing-blue?style=for-the-badge&logo=google-play)](https://play.google.com/apps/testing/com.aital.plaintext)
+[![Google Play](https://img.shields.io/badge/Google%20Play-Testing-blue?style=for-the-badge&logo=google-play)](https://play.google.com/store/apps/details?id=com.aital.plaintext)
 [![Flutter](https://img.shields.io/badge/Flutter-3.0+-02569B?style=for-the-badge&logo=flutter)](https://flutter.dev)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green?style=for-the-badge)](LICENSE)
 
